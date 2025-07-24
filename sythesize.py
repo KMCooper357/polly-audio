@@ -1,43 +1,32 @@
 import boto3
 import os
 
-def synthesize_speech():
-    # Load environment variables
-    aws_access_key = os.getenv("AWS_ACCESS_KEY_ID")
-    aws_secret_key = os.getenv("AWS_SECRET_ACCESS_KEY")
-    bucket_name = os.getenv("AWS_S3_BUCKET")
+# Read text from file
+with open('speech.txt', 'r') as file:
+    text = file.read()
 
-    # Setup clients
-    polly = boto3.client('polly', region_name='us-east-1',
-                         aws_access_key_id=aws_access_key,
-                         aws_secret_access_key=aws_secret_key)
+# Initialize Polly client
+polly_client = boto3.client('polly', region_name='us-east-1')
 
-    s3 = boto3.client('s3',
-                      aws_access_key_id=aws_access_key,
-                      aws_secret_access_key=aws_secret_key)
+# Synthesize speech
+response = polly_client.synthesize_speech(
+    Text=text,
+    OutputFormat='mp3',
+    VoiceId='Joanna'
+)
 
-    # Read text file
-    with open("speech.txt", "r") as f:
-        text = f.read()
+# Save the audio stream locally
+with open('output.mp3', 'wb') as file:
+    file.write(response['AudioStream'].read())
 
-    # Synthesize speech
-    response = polly.synthesize_speech(
-        Text=text,
-        OutputFormat="mp3",
-        VoiceId="Joanna"
-    )
+print("Audio synthesis complete. File saved as output.mp3.")
 
-    # Save output
-    output_file = "output.mp3"
-    with open(output_file, 'wb') as f:
-        f.write(response['AudioStream'].read())
+# Upload to S3
+s3_client = boto3.client('s3', region_name='us-east-1')
+bucket_name = os.environ['S3_BUCKET']
+s3_key = 'polly-audio/output.mp3'
 
-    # Upload to S3
-    s3.upload_file(
-        Filename=output_file,
-        Bucket=bucket_name,
-        Key="polly-audio/beta.mp3"
-    )
+# Adding a comment
 
-if __name__ == "__main__":
-    synthesize_speech()
+s3_client.upload_file('output.mp3', bucket_name, s3_key)
+print(f"Uploaded to s3://{bucket_name}/{s3_key}")
