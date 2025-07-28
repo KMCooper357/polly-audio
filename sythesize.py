@@ -28,12 +28,12 @@ s3_client = boto3.client('s3', region_name='us-east-1')
 bucket_name = os.environ.get('S3_BUCKET')
 
 if not bucket_name:
-    print("❌ Environment variable 'S3_BUCKET' is not set.")
+    print(" Environment variable 'S3_BUCKET' is not ready.")
     sys.exit(1)
 
 # Use override key if provided
 s3_key = os.environ.get('S3_KEY', 'polly-audio/output.mp3')
 
 s3_client.upload_file(output_filename, bucket_name, s3_key)
-print(f"✅ Uploaded to s3://{bucket_name}/{s3_key}")
+print(f"Uploaded to s3://{polly-learning-audio}/{s3_key}")
 
